@@ -1,9 +1,10 @@
-import { login, logout, getInfo } from '@/api/user'
-import { getToken, setToken, removeToken } from '@/utils/auth'
+import { login, getInfo, refreshToken } from '@/api/user'
+import { getToken, setToken, setRefreshToken, getRefreshToken, removeToken, removeRefreshToken } from '@/utils/auth'
 import router, { resetRouter } from '@/router'
 
 const state = {
   token: getToken(),
+  refresh_token: getRefreshToken(),
   name: '',
   avatar: '',
   introduction: '',
@@ -13,6 +14,9 @@ const state = {
 const mutations = {
   SET_TOKEN: (state, token) => {
     state.token = token
+  },
+  SET_REFRESH_TOKEN: (state, token) => {
+    state.refresh_token = token
   },
   SET_INTRODUCTION: (state, introduction) => {
     state.introduction = introduction
@@ -36,7 +40,9 @@ const actions = {
       login({ username: username.trim(), password: password }).then(response => {
         const { data } = response
         commit('SET_TOKEN', data.token)
+        commit('SET_REFRESH_TOKEN', data.refresh_token)
         setToken(data.token)
+        setRefreshToken(data.refresh_token)
         resolve()
       }).catch(error => {
         reject(error)
@@ -47,7 +53,7 @@ const actions = {
   // get user info
   getInfo({ commit, state }) {
     return new Promise((resolve, reject) => {
-      getInfo(state.token).then(response => {
+      getInfo().then(response => {
         const { data } = response
 
         if (!data) {
@@ -56,7 +62,6 @@ const actions = {
 
         const { roles, name, avatar, introduction } = data
 
-        // roles must be a non-empty array
         if (!roles || roles.length <= 0) {
           reject('getInfo: roles must be a non-null array!')
         }
@@ -75,7 +80,7 @@ const actions = {
   // user logout
   logout({ commit, state, dispatch }) {
     return new Promise((resolve, reject) => {
-      logout(state.token).then(() => {
+      try {
         commit('SET_TOKEN', '')
         commit('SET_ROLES', [])
         removeToken()
@@ -86,8 +91,34 @@ const actions = {
         dispatch('tagsView/delAllViews', null, { root: true })
 
         resolve()
-      }).catch(error => {
+      } catch (error) {
         reject(error)
+      }
+    })
+  },
+
+  refreshToken({ commit }) {
+    return new Promise((resolve, reject) => {
+      refreshToken().then(res => {
+        const { data } = res
+        if (!data) {
+          reject('Verification failed, please Login again.')
+        }
+
+        const { token, refresh_token } = data
+
+        commit('SET_TOKEN', token)
+        commit('SET_REFRESH_TOKEN', refresh_token)
+        setToken(token)
+        setRefreshToken(refresh_token)
+        resolve()
+      }).catch(err => {
+        commit('SET_TOKEN', '')
+        commit('SET_REFRESH_TOKEN', '')
+        commit('SET_ROLES', [])
+        removeToken()
+        removeRefreshToken()
+        reject(err)
       })
     })
   },
@@ -96,8 +127,10 @@ const actions = {
   resetToken({ commit }) {
     return new Promise(resolve => {
       commit('SET_TOKEN', '')
+      commit('SET_REFRESH_TOKEN', '')
       commit('SET_ROLES', [])
       removeToken()
+      removeRefreshToken()
       resolve()
     })
   },

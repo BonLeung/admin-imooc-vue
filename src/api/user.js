@@ -22,3 +22,10 @@ export function logout() {
     method: 'post'
   })
 }
+
+export function refreshToken() {
+  return request({
+    url: '/user/refreshToken',
+    method: 'get'
+  })
+}
