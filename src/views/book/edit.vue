@@ -13,7 +13,7 @@ export default {
   },
   data() {
     return {
-      isEdit: false
+      isEdit: true
     }
   }
 }

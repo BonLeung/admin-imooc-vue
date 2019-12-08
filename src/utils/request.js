@@ -77,7 +77,10 @@ service.interceptors.response.use(
     const { msg, status } = error.response.data
     if (status === 401) {
       store.dispatch('user/refreshToken').then(res => {
-        window.location.reload()
+        const config = error.config
+        config.headers['Authorization'] = `Bearer ${getToken()}`
+        config.headers['RefreshToken'] = `Bearer ${getRefreshToken()}`
+        axios(config)
       })
       return
     }

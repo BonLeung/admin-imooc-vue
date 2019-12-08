@@ -111,7 +111,7 @@ const actions = {
         commit('SET_REFRESH_TOKEN', refresh_token)
         setToken(token)
         setRefreshToken(refresh_token)
-        resolve()
+        resolve(res)
       }).catch(err => {
         commit('SET_TOKEN', '')
         commit('SET_REFRESH_TOKEN', '')
