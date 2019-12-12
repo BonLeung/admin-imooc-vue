@@ -1,6 +1,7 @@
 <template>
   <div class="upload-container">
     <el-upload
+      ref="upload"
       :action="action"
       :headers="headers"
       :multiple="false"
@@ -25,7 +26,7 @@
 </template>
 
 <script>
-import { getToken } from '../../utils/auth'
+import { mapGetters } from 'vuex'
 
 export default {
   props: {
@@ -46,18 +47,19 @@ export default {
     }
   },
   computed: {
+    ...mapGetters(['token']),
     headers() {
       return {
-        Authorization: `Bearer ${getToken()}`
+        Authorization: `Bearer ${this.token}`
       }
     }
   },
   methods: {
     beforeUpload(file) {
-      console.log(file)
       this.$emit('beforeUpload', file)
     },
     onSuccess(response, file) {
+      console.log('onSuccess', response, file)
       const { code, msg } = response
       if (code !== 0) {
         this.$message({
@@ -71,7 +73,7 @@ export default {
         message: msg || '上传成功',
         type: 'success'
       })
-      this.$emit('onSuccess', file)
+      this.$emit('onSuccess', response)
     },
     onError(err) {
       const errMsg = err.message && JSON.parse(err.message)
